@@ -1,0 +1,17 @@
+[2024-01-06 11:18:16 +0000] [12067] [INFO] Starting gunicorn 21.2.0
+[2024-01-06 11:18:16 +0000] [12067] [INFO] Listening at: http://0.0.0.0:5000 (12067)
+[2024-01-06 11:18:16 +0000] [12067] [INFO] Using worker: sync
+[2024-01-06 11:18:16 +0000] [12068] [INFO] Booting worker with pid: 12068
+[2024-01-06 13:55:38 +0000] [12067] [ERROR] Worker (pid:12068) was sent SIGHUP!
+[2024-01-06 13:55:38 +0000] [13159] [INFO] Booting worker with pid: 13159
+[2024-01-06 13:55:38 +0000] [12067] [INFO] Handling signal: hup
+[2024-01-06 13:55:38 +0000] [12067] [INFO] Hang up: Master
+[2024-01-06 13:55:38 +0000] [13160] [INFO] Booting worker with pid: 13160
+[2024-01-06 13:55:38 +0000] [13159] [INFO] Worker exiting (pid: 13159)
+python3: can't open file '/home/dein_bot_script.py': [Errno 2] No such file or directory
+python: can't open file '/home/bot.py': [Errno 2] No such file or directory
+python: can't open file '/home/bot.py': [Errno 2] No such file or directory
+[2024-01-18 21:27:34 +0000] [13160] [INFO] Worker exiting (pid: 13160)
+[2024-01-18 21:27:34 +0000] [12067] [INFO] Handling signal: term
+[2024-01-18 21:27:34 +0000] [12067] [ERROR] Worker (pid:13160) was sent SIGTERM!
+[2024-01-18 21:27:34 +0000] [12067] [INFO] Shutting down: Master
