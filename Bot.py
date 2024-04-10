@@ -71,7 +71,7 @@ async def on_ready():
 # MySQL-Datenbankkonfiguration
 DB_HOST = 'localhost'
 DB_PORT = 3306
-DB_USER = 'root'
+DB_USER = 'mika'
 DB_PASSWORD = 'SMXshhxXv5tYZ6B'
 DB_NAME = 'discordbp'
 
