@@ -15,7 +15,7 @@ async def on_ready():
 @bot.event
 async def on_member_join(member):
     invites_before = await get_invites()
-    # Hier kannst du benutzerdefinierte Aktionen für das Join-Event implementieren
+    # Hier kannst du benutzerdefinierte Aktionen fï¿½r das Join-Event implementieren
     # ...
 
     invites_after = await get_invites()
@@ -44,5 +44,5 @@ async def log_invite(member, invite):
         log_message = f'{timestamp} - {member.name}#{member.discriminator} wurde von {invite.inviter.name}#{invite.inviter.discriminator} ({invite.inviter.id}) eingeladen.\n'
         await log_channel.send(log_message)
 
-# Dein Bot-Token hier einfügen
+# Dein Bot-Token hier einfï¿½gen
 bot.run('MTE5Mjg2NDY5NjI5OTE1OTU1Mg.Gw2r2x.NCw8D4dv5ZRztqElN1zVlfdBDgZhDeCiez8-8Q')

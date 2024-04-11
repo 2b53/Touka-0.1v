@@ -14,7 +14,7 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!', intents=intents)
 slash = SlashCommand(bot, sync_commands=True)  # Entfernen Sie die zweite Instanziierung von SlashCommand
 
-# Definieren Sie den Zielkanal und die Schwelle f r neue Accounts
+# Definieren Sie den Zielkanal und die Schwelle für neue Accounts
 BOT_CHANNEL_ID = 1226715653738729554
 NEW_ACCOUNT_THRESHOLD_DAYS = 21
 
@@ -23,10 +23,10 @@ async def on_member_join(member):
     report_channel = bot.get_channel(BOT_CHANNEL_ID)
     if report_channel:
         if (datetime.utcnow() - member.created_at).days < NEW_ACCOUNT_THRESHOLD_DAYS:
-            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt).  berpr fung gestartet...')
+            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt). überprüfung gestartet...')
             await check_user_info(member, report_channel)
         else:
-            await report_channel.send(f'{member} ist ein neuer Account.  berpr fung gestartet...')
+            await report_channel.send(f'{member} ist ein neuer Account. überprüfung gestartet...')
             await check_user_info(member, report_channel)
     else:
         print(f'Bot-Kanal mit der ID {BOT_CHANNEL_ID} nicht gefunden.')
@@ -37,11 +37,11 @@ async def check_user_info(member: discord.Member, report_channel: discord.TextCh
     has_untrusted_links = any(link in member.name for link in discord_links)
     evaluation = f'Account existiert seit: {account_age} Tage\n'
     if has_untrusted_links:
-        evaluation += 'Auff llige Links gefunden\n'
-        evaluation += 'Nicht vertrauensw rdige Discord-Links enthalten'
-    await report_channel.send(f'Auswertung f r {member}:\n{evaluation}')
+        evaluation += 'Auffällige Links gefunden\n'
+        evaluation += 'Nicht vertrauenswürdige Discord-Links enthalten'
+    await report_channel.send(f'Auswertung für {member}:\n{evaluation}')
 
-@slash.slash(name='roles_check', description=' berpr ft auf potenzielle L cken im Rollensystem')
+@slash.slash(name='roles_check', description=' überprüft auf potenzielle Lücken im Rollensystem')
 async def roles_check(ctx: SlashContext):
     await ctx.defer()
     guild = ctx.guild
@@ -52,10 +52,10 @@ async def roles_check(ctx: SlashContext):
         role1 = sorted_roles[i]
         role2 = sorted_roles[i + 1]
         if role1.position != role2.position - 1:
-            await ctx.send(f"Potenzielle L cke zwischen {role1.name} und {role2.name}")
+            await ctx.send(f"Potenzielle Lücke zwischen {role1.name} und {role2.name}")
             gaps_found = True
     if not gaps_found:
-        await ctx.send("Keine potenziellen L cken im Rollensystem gefunden.")
+        await ctx.send("Keine potenziellen Lücken im Rollensystem gefunden.")
 
 @bot.event
 async def on_ready():
@@ -98,22 +98,22 @@ async def on_member_join(member):
     report_channel = bot.get_channel(BOT_CHANNEL_ID)  # Diese Variable muss definiert werden
     if report_channel:
         if (datetime.utcnow() - member.created_at).days < NEW_ACCOUNT_THRESHOLD_DAYS:  # Diese Variable muss definiert werden
-            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt).  berpr fung gestartet...')
+            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt). überprüfung gestartet...')
             await check_user_info(member, report_channel)
         else:
-            await report_channel.send(f'{member} ist ein neuer Account.  berpr fung gestartet...')
+            await report_channel.send(f'{member} ist ein neuer Account. überprüfung gestartet...')
             await check_user_info(member, report_channel)
     else:
         print(f'Bot-Kanal mit der ID {BOT_CHANNEL_ID} nicht gefunden.')
 
-@slash.slash(name='check_user', description=' berpr ft die Informationen eines Benutzers')
+@slash.slash(name='check_user', description=' überprüft die Informationen eines Benutzers')
 async def check_user(ctx: SlashContext, member: discord.Member):
     await ctx.defer()
     report_channel = ctx.channel
-    await report_channel.send(f'{member} wird  berpr ft...')
+    await report_channel.send(f'{member} wird überprüft...')
     await check_user_info(member, report_channel)
 
-@slash.slash(name='backup', description='F hrt ein Backup des Servers durch')
+@slash.slash(name='backup', description='Führt ein Backup des Servers durch')
 async def backup(ctx: SlashContext):
     guild = ctx.guild
     if guild is None:
@@ -197,7 +197,7 @@ async def invite(ctx: SlashContext):
         for channel in guild.text_channels:
             invite = await channel.create_invite(max_age=86400)  # Set the invitation link to expire in 24 hours
             invite_links.append(invite.url)
-        await user.send(f"Hier sind die Einladungslinks f r den Server {guild.name}:\n" + "\n".join(invite_links))
+        await user.send(f"Hier sind die Einladungslinks für den Server {guild.name}:\n" + "\n".join(invite_links))
         await ctx.send("Einladungen wurden erfolgreich an den Benutzer gesendet.")
     else:
         await ctx.send("Benutzer nicht gefunden.")
@@ -207,7 +207,7 @@ async def invite(ctx: SlashContext):
 async def on_ready():
     print(f'{bot.user} ist bereit.')
 
-@slash.slash(name="clear", description="L scht eine bestimmte Anzahl von Nachrichten im aktuellen Kanal.", options=[
+@slash.slash(name="clear", description="Löscht eine bestimmte Anzahl von Nachrichten im aktuellen Kanal.", options=[
     {"name": "amount", "description": "Die Anzahl der zu l schenden Nachrichten.", "type": 4, "required": True}
 ])
 async def clear(ctx: SlashContext, amount: int):
@@ -217,15 +217,15 @@ async def clear(ctx: SlashContext, amount: int):
     else:
         await ctx.send('Du hast keine Berechtigung, Nachrichten zu l schen.')
 
-@slash.slash(name="hilfe", description="Zeigt eine Liste aller verf gbaren Befehle an.")
+@slash.slash(name="hilfe", description="Zeigt eine Liste aller verfügbaren Befehle an.")
 async def help_command(ctx: SlashContext):
     help_message = """
     **Hilfe**
 
     `/pat [Mitglied]`: Streichelt das angegebene Mitglied.
     `/cuddle [Mitglied]`: Umarmt das angegebene Mitglied.
-    `/check_exploiter [Mitglied]`:  berpr ft, ob das Mitglied als Exploiter markiert ist.
-    `/ban_exploiter [Mitglied] [Dauer in Wochen]`: Markiert das Mitglied als Exploiter und bannt es f r die angegebene Dauer.
+    `/check_exploiter [Mitglied]`: überprüaft, ob das Mitglied als Exploiter markiert ist.
+    `/ban_exploiter [Mitglied] [Dauer in Wochen]`: Markiert das Mitglied als Exploiter und bannt es für die angegebene Dauer.
     `/clear [Anzahl]`: L scht eine bestimmte Anzahl von Nachrichten im aktuellen Kanal.
     `/kiss [Mitglied]`: K sst das angegebene Mitglied.
     `/fuck [Mitglied]`: Fickt das angegebene Mitglied. (nur 18+)
@@ -235,7 +235,7 @@ async def help_command(ctx: SlashContext):
     https://tenor.com/view/chloe-maid-uwu-gif-20733024
     """
     
-    # Zus tzlich zu den Basisbefehlen f ge ich hier die Beschreibung der weiteren Befehle hinzu:
+    # Zusätzlich zu den Basisbefehlen füge ich hier die Beschreibung der weiteren Befehle hinzu:
     help_message += """
     
     **Weitere Befehle:**
@@ -268,7 +268,7 @@ async def on_ready():
 @slash.slash(name='check_exploiter', description=' berpr ft, ob ein Benutzer als Exploiter markiert ist', options=[
     create_option(
         name='member',
-        description='Das Mitglied, das  berpr ft werden soll',
+        description='Das Mitglied, das  überprüft werden soll',
         option_type=SlashCommandOptionType.USER,
         required=True
     )
@@ -285,24 +285,24 @@ async def check_exploiter(ctx: SlashContext, member: discord.Member):
         await ctx.send(f'Du hast keine Berechtigung, diesen Befehl auszuf hren, {ctx.author.mention}.')
 
 # Slash-Befehl f r virtuellen Kuss
-@slash.slash(name='kiss', description='K sst ein Mitglied virtuell', options=[
+@slash.slash(name='kiss', description='Küsst ein Mitglied virtuell', options=[
     create_option(
         name='member',
-        description='Das Mitglied, das gek sst werden soll',
+        description='Das Mitglied, das geküsst werden soll',
         option_type=SlashCommandOptionType.USER,
         required=False
     )
 ])
 async def kiss(ctx: SlashContext, member: discord.Member = None):
     if member is None:
-        await ctx.send("Du musst jemanden angeben, den du k ssen m chtest!")
+        await ctx.send("Du musst jemanden angeben, den du küssen möchtest!")
     else:
         kiss_gif_url = 'https://tenor.com/view/horimiya-animes-anime-shoujo-shounen-romance-boy-girl-gif-17793070781933240295'
         await ctx.send(f'{ctx.author.mention} k sst {member.mention}! :heart:')
         await ctx.send(kiss_gif_url)
 
 # Slash-Befehl f r "fuck" (nur f r 18+)
-@slash.slash(name='fuck', description='Fickt ein Mitglied (nur f r 18+)', options=[
+@slash.slash(name='fuck', description='Fickt ein Mitglied (nur für 18+)', options=[
     create_option(
         name='member',
         description='Das Mitglied, das gefickt werden soll',
@@ -312,7 +312,7 @@ async def kiss(ctx: SlashContext, member: discord.Member = None):
 ])
 async def fuck(ctx: SlashContext, member: discord.Member):
     if member is None:
-        await ctx.send("Du musst jemanden angeben, den du v geln m chtest!")
+        await ctx.send("Du musst jemanden angeben, den du vögeln möchtest!")
     else:
         fuck_gif_url = 'https://media.discordapp.net/attachments/1164333925590630442/1175994841138745364/1602536398_0-89096798-11.gif?ex=661c990b&is=660a240b&hm=b463c9474a9b7251032cc34ec4d87a264e971153ceea611dff0d14f171348e6d&'
         await ctx.send(f'{ctx.author.mention} fickt {member.mention}! :heart:')
