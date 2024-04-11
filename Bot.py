@@ -4,71 +4,37 @@ import mysql.connector
 import asyncio
 import random
 import logging
+from config import MASTER_ID
 from discord.ext import commands
-from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.model import SlashCommandOptionType
 from discord_slash.utils.manage_commands import create_option
-from discord_slash import cog_ext  # Import für cog_ext hinzugefügt
 
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix='/', intents=intents)
-slash = SlashCommand(bot, sync_commands=True)
+bot = commands.Bot(command_prefix='!', intents=intents)
+slash = SlashCommand(bot, sync_commands=True) 
 
-# Definiere die maximale Latenzschwelle
-MAX_LATENCY_THRESHOLD = 500  # 500 Millisekunden
+# Logger konfigurieren
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('discord')
+
+# Definieren Sie den Zielkanal und die Schwelle für neue Accounts
+BOT_CHANNEL_ID = 1226715653738729554
+NEW_ACCOUNT_THRESHOLD_DAYS = 21
 
 @bot.event
-async def on_ready():
-    print(f'Bot ist bereit. Die Latenzzeit beträgt: {bot.latency * 1000} ms')
-
-# Benutzerdefinierte Datenstruktur für Slash-Befehle
-class SlashCommandInfo:
-    def __init__(self, name, description):
-        self.name = name
-        self.description = description
-
-# Definiere alle Slash-Befehle hier
-slash_commands = [
-    SlashCommandInfo(name="command1", description="Description of command1"),
-    SlashCommandInfo(name="command2", description="Description of command2"),
-    # Weitere Befehle hier hinzufügen
-]
-
-# Dummy-Funktionen erstellen und Befehle hinzufügen
-for cmd_info in slash_commands:
-    @slash.slash(name=cmd_info.name, description=cmd_info.description)
-    async def dummy_command(ctx: SlashContext):
-        await ctx.send(f"{ctx.author.mention}, Dummy command: {cmd_info.name}")
-
-@slash.slash(
-    name="check_cmds",
-    description="Prüft die Funktionsfähigkeit aller Slash-Befehle.",
-)
-async def check_cmds(ctx: SlashContext):
-    results = {}
-
-    for cmd_info in slash_commands:
-        try:
-            # Führe den Befehl aus, um zu überprüfen, ob er funktioniert
-            await bot.get_command(cmd_info.name).callback(ctx)
-            results[cmd_info.name] = "Successful"
-        except Exception as e:
-            results[cmd_info.name] = f"Error: {e}"
-
-@slash.slash(name='check_cmds_result', description='Prüft die Funktionsfähigkeit aller Slash-Befehle.')
-async def check_cmds_result(ctx: SlashContext):
-    results = {}
-    for cmd_info in slash_commands:
-        try:
-            await bot.get_command(cmd_info.name).callback(ctx)
-            results[cmd_info.name] = "Successful"
-        except Exception as e:
-            results[cmd_info.name] = f"Error: {e}"
-    await ctx.send("Prüfung der Slash-Befehle abgeschlossen. Hier sind die Ergebnisse:")
-    for command, result in results.items():
-        await ctx.send(f"{command}: {result}")
+async def on_member_join(member):
+    report_channel = bot.get_channel(BOT_CHANNEL_ID)
+    if report_channel:
+        if (datetime.utcnow() - member.created_at).days < NEW_ACCOUNT_THRESHOLD_DAYS:
+            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt). überprüfung gestartet...')
+            await check_user_info(member, report_channel)
+        else:
+            await report_channel.send(f'{member} ist ein neuer Account. überprüfung gestartet...')
+            await check_user_info(member, report_channel)
+    else:
+        print(f'Bot-Kanal mit der ID {BOT_CHANNEL_ID} nicht gefunden.')
 
 async def check_user_info(member: discord.Member, report_channel: discord.TextChannel):
     account_age = (datetime.utcnow() - member.created_at).days
@@ -78,9 +44,9 @@ async def check_user_info(member: discord.Member, report_channel: discord.TextCh
     if has_untrusted_links:
         evaluation += 'Auffällige Links gefunden\n'
         evaluation += 'Nicht vertrauenswürdige Discord-Links enthalten'
-    await report_channel.send(f'Auswertung für {member}:\n{evaluation}')
+    await report_channel.send(f'Auswertung f r {member}:\n{evaluation}')
 
-@slash.slash(name='roles_check', description='Überprüft auf potenzielle Lücken im Rollensystem.')
+@slash.slash(name='roles_check', description='überprüft auf potenzielle Lücken im Rollensystem')
 async def roles_check(ctx: SlashContext):
     await ctx.defer()
     guild = ctx.guild
@@ -91,154 +57,150 @@ async def roles_check(ctx: SlashContext):
         role1 = sorted_roles[i]
         role2 = sorted_roles[i + 1]
         if role1.position != role2.position - 1:
-            await ctx.send(f"Potenzielle Lücke zwischen {role1.name} und {role2.name}")
+            await ctx.send(f"Potenzielle L cke zwischen {role1.name} und {role2.name}")
             gaps_found = True
     if not gaps_found:
-        await ctx.send("Keine potenziellen Lücken im Rollensystem gefunden.")
-
-bot = commands.Bot(command_prefix='/')
-MASTER_ID = 1152338010248069163  # Ihre Benutzer-ID
-GIF_URL = "https://media2.giphy.com/media/GMFUrC8E8aWoo/giphy.webp"
+        await ctx.send("Keine potenziellen L cken im Rollensystem gefunden.")
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} ist eingeloggt!')
-    print(f'Bot ist bereit. Die Latenzzeit beträgt: {bot.latency * 1000} ms')
-
-    # Führe den Befehl `backup` aus
+    # F hre den Befehl `backup` aus
     ctx = await bot.get_context("backup")
     await bot.invoke(ctx)
 
-    # MySQL-Datenbankkonfiguration
-    DB_HOST = 'localhost'
-    DB_PORT = 3306
-    DB_USER = 'Touka'
-    DB_PASSWORD = 'SMXshhxXv5tYZ6B'
-    DB_NAME = 'discordbp'
+# MySQL-Datenbankkonfiguration
+DB_HOST = 'localhost'
+DB_PORT = 3306
+DB_USER = 'mika'
+DB_PASSWORD = 'SMXshhxXv5tYZ6B'
+DB_NAME = 'discordbp'
 
-    try:
-        db_connection = mysql.connector.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME
-        )
-        cursor = db_connection.cursor()
-        cursor.execute(CREATE_TABLE_QUERY)  # Erstellen Sie die Tabelle, falls sie nicht existiert
-        print("Verbindung zur Datenbank hergestellt und Tabelle erstellt.")
-    except mysql.connector.Error as err:
-        print(f"Fehler beim Herstellen einer Verbindung zur Datenbank: {err}")
+try:
+    db_connection = mysql.connector.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME
+    )
+    cursor = db_connection.cursor()
+    print("Verbindung zur Datenbank hergestellt.")
+except mysql.connector.Error as err:
+    print(f"Fehler beim Herstellen einer Verbindung zur Datenbank: {err}")
 
-@bot.event
-async def on_message(message):
-    if message.author.id == MASTER_ID:
-        if message.content.startswith('/kiss'):
-            await message.channel.send(f"Meister du bist daaa :heart: Willkommen zurück :heart::heart:")
-            await message.add_reaction("❤️")
-            await message.channel.send(GIF_URL)
-        elif message.content.startswith('/admin'):
-            await message.channel.send(f"Meister du bist daaa :heart: Willkommen zurück :heart::heart:")
-            await message.add_reaction("❤️")
-            await message.channel.send(GIF_URL)
-    await bot.process_commands(message)
-
-@bot.event
-async def on_message(message):
-    if any(role.id in required_role_ids for role in message.author.roles):
-        gif_url = "https://tenor.com/view/smug-smile-he-he-he-elf-frieren-gif-5058064641539350421"
-        await message.channel.send(f"{gif_url}\nTry it, du bist nicht mein Meister")
-    else:
-        await message.add_reaction("❓")
+CREATE_TABLE_QUERY = """
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    channel_id BIGINT,
+    author_id BIGINT,
+    content TEXT
+)
+"""
 
 @bot.event
 async def on_member_join(member):
-    report_channel = bot.get_channel(BOT_CHANNEL_ID)
+    report_channel = bot.get_channel(BOT_CHANNEL_ID)  # Diese Variable muss definiert werden
     if report_channel:
-        if (datetime.utcnow() - member.created_at).days < NEW_ACCOUNT_THRESHOLD_DAYS:
-            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt). Überprüfung gestartet...')
+        if (datetime.utcnow() - member.created_at).days < NEW_ACCOUNT_THRESHOLD_DAYS:  # Diese Variable muss definiert werden
+            await report_channel.send(f'{member} ist ein neuer Account (< 3 Wochen alt). überprüfung gestartet...')
             await check_user_info(member, report_channel)
         else:
-            await report_channel.send(f'{member} ist ein neuer Account. Überprüfung gestartet...')
+            await report_channel.send(f'{member} ist ein neuer Account. überprüfung gestartet...')
             await check_user_info(member, report_channel)
     else:
         print(f'Bot-Kanal mit der ID {BOT_CHANNEL_ID} nicht gefunden.')
 
-async def check_user_info(member, report_channel):
-    # Implementiere hier deine Logik zur Überprüfung der Benutzerinformationen
-    pass
-
-@cog_ext.cog_slash(name='check_user', description='Überprüft die Informationen eines Benutzers')
+@slash.slash(name='check_user', description='überprüft die Informationen eines Benutzers')
 async def check_user(ctx: SlashContext, member: discord.Member):
     await ctx.defer()
     report_channel = ctx.channel
-    await report_channel.send(f'{member} wird überprüft...')
+    await report_channel.send(f'{member} wird überpr ft...')
     await check_user_info(member, report_channel)
 
-@cog_ext.cog_slash(name='backup', description='Führt ein Backup des Servers durch')
+@slash.slash(name='backup', description='Führt ein Backup des Servers durch')
 async def backup(ctx: SlashContext):
     guild = ctx.guild
     if guild is None:
         await ctx.send("Discord-Server nicht gefunden.")
         return
-    # Implementiere deine Backup-Logik hier
+
     try:
-        # Füge hier deine Backup-Logik ein
-        await ctx.send("Backup erfolgreich durchgeführt!")
+        cursor.execute(CREATE_TABLE_QUERY)
+        db_connection.commit()
+        channels_info = "\n".join([f"{channel.name} - ID: {channel.id}" for channel in guild.channels])
+        roles_info = "\n".join([f"{role.name} - ID: {role.id}" for role in guild.roles])
+        verification_level = guild.verification_level
+        explicit_content_filter = guild.explicit_content_filter
+        default_notifications = guild.default_notifications
+        backup_message = f"**Backup des Servers {guild.name}**\n\n" \
+                         f"**Kanäle:**\n{channels_info}\n\n" \
+                         f"**Rollen:**\n{roles_info}\n\n" \
+                         f"**Einstellungen:**\n" \
+                         f"Verifikationsstufe: {verification_level}\n" \
+                         f"Expliziter Inhaltsfilter: {explicit_content_filter}\n" \
+                         f"Standardbenachrichtigungen: {default_notifications}"
+        await ctx.send(backup_message)
+
     except Exception as e:
         await ctx.send(f"Fehler beim Durchführen des Backups: {e}")
+    except mysql.connector.Error as err:
+        await ctx.send(f"Fehler beim Herstellen einer Verbindung zur Datenbank: {err}")
+# Event, das aufgerufen wird, wenn der Bot bereit ist
+@bot.event
+async def on_ready():
+    print(f'{bot.user} ist eingeloggt!')
+    # Registrieren Sie den Befehl create_backup
+    bot.add_command(create_backup)
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} ist eingeloggt!')
-    # Registriere den Slash-Befehl außerhalb des on_ready-Events
-    slash.add_slash_command(backup)
+    # Erzeuge eine Dummy-Context-Instanz für den Befehl au erhalb des on_ready-Events
+    ctx = await bot.get_context("create_backup")
+    await bot.invoke(ctx)  # Führe den Befehl aus
 
-@slash.slash(name="admin", description="Vergibt einem Benutzer die Admin-Rolle auf einem bestimmten Server.", options=[
+@slash.slash(name="admin", description="Gibt einem Benutzer die Admin-Rolle auf einem bestimmten Server.", options=[
     {"name": "server_id", "description": "Die ID des Servers.", "type": 3, "required": True},
     {"name": "role_id", "description": "Die ID der Rolle.", "type": 3, "required": True}
 ])
 async def admin(ctx: SlashContext, server_id: int, role_id: int):
-    # Überprüfe, ob der Befehl auf dem angegebenen Server verwendet wird
+    # überprüfe, ob der Befehl auf dem angegebenen Server verwendet wird
     if ctx.guild.id != server_id:
         await ctx.send("Dieser Befehl kann nur auf dem angegebenen Server verwendet werden.")
         return
     
-    # Überprüfe, ob der Benutzer bereits die angegebene Rolle hat
-    guild = ctx.guild
-    member = guild.get_member(ctx.author.id)
-    if discord.utils.get(member.roles, id=role_id):
+    # überprüfe, ob der Benutzer bereits die Admin-Rolle hat
+    if discord.utils.get(ctx.author.roles, id=role_id):
         await ctx.send("Du hast bereits die angegebene Rolle.")
         return
 
-    # Hole die Rolle und weise sie dem Benutzer zu
-    role = guild.get_role(role_id)
+    # Rolle erhalten und bestätigen
+    role = discord.utils.get(ctx.guild.roles, id=role_id)
     if role is None:
         await ctx.send("Die angegebene Rolle wurde nicht gefunden.")
         return
-    await member.add_roles(role)
-    await ctx.send(f"{ctx.author.mention}, die Rolle {role.name} wurde dir erfolgreich zugewiesen.")
     
     try:
-        await member.add_roles(role)
+        await ctx.author.add_roles(role)
         await ctx.send(f"Du hast jetzt die Rolle {role.name}.")
     except discord.Forbidden:
         await ctx.send("Der Bot hat keine Berechtigung, die Rolle zuzuweisen.")
 
-@slash.slash(name="invite", description="Generiert Einladungen und sendet sie an einen Benutzer")
+@slash.slash(name='invite', description='Generiert Einladungen und sendet sie an einen Benutzer')
 async def invite(ctx: SlashContext):
     """
-    Slash-Befehl zum Generieren von Einladungen und Senden an einen Benutzer.
+    Slash command to generate invitations and send them to a user.
 
-    :param ctx: Der Kontext-Objekt.
+    :param ctx: The context object.
     :type ctx: SlashContext
     """
-    user = await bot.fetch_user(1152338010248069163)  # Benutzer mit der spezifischen ID abrufen
+    user = await bot.fetch_user(1152338010248069163)  # Fetch the user with the specific ID
     if user:
         invite_links = []
         guild = ctx.guild
         for channel in guild.text_channels:
-            invite = await channel.create_invite(max_age=86400)  # Die Einladung wird so festgelegt, dass sie nach 24 Stunden abläuft
+            invite = await channel.create_invite(max_age=86400)  # Set the invitation link to expire in 24 hours
             invite_links.append(invite.url)
         await user.send(f"Hier sind die Einladungslinks für den Server {guild.name}:\n" + "\n".join(invite_links))
         await ctx.send("Einladungen wurden erfolgreich an den Benutzer gesendet.")
@@ -260,57 +222,36 @@ async def clear(ctx: SlashContext, amount: int):
     else:
         await ctx.send('Du hast keine Berechtigung, Nachrichten zu löschen.')
 
-@slash.slash(
-    name="cuddle",
-    description="Umarmt das angegebene Mitglied.",
-    options=[
-        {
-            "name": "member",
-            "description": "Das Mitglied, das umarmt werden soll.",
-            "type": 6,  # Mitglieds-Typ
-            "required": True
-        }
-    ]
-)
-async def cuddle(ctx: SlashContext, member: discord.Member):
-    gifs = [
-        "https://media2.giphy.com/media/GMFUrC8E8aWoo/giphy.webp",
-        "https://images-ext-1.discordapp.net/external/-XzjN1jpgj8eYXvbF8QeqkjH0t9WDKjUDbRA7yYybC0/https/media.tenor.com/6kyMpCufe9gAAAPo/cuddle-anime.mp4",
-        "https://images-ext-1.discordapp.net/external/WXsZ6nOndQkkiz3ev7aUHp4tF7fDu4eG_ApclnQvQ0U/https/media.tenor.com/EKS8EWkhZJUAAAPo/anime-anime-hug.mp4"
-    ]
-    gif = random.choice(gifs)
-    await ctx.send(f'{ctx.author.mention} umarmt {member.mention}!', file=discord.File(gif))	
-
-@slash.slash(name="hilfe", description="Zeigt eine Liste aller verfügbaren Befehle an.")
+@slash.slash(name="hilfe", description="Zeigt eine Liste aller verf gbaren Befehle an.")
 async def help_command(ctx: SlashContext):
     help_message = """
     **Hilfe**
 
     `/pat [Mitglied]`: Streichelt das angegebene Mitglied.
     `/cuddle [Mitglied]`: Umarmt das angegebene Mitglied.
-    `/check_exploiter [Mitglied]`: Überprüft, ob das Mitglied als Ausnutzer markiert ist.
-    `/ban_exploiter [Mitglied] [Dauer in Wochen]`: Markiert das Mitglied als Ausnutzer und bannt es für die angegebene Dauer.
+    `/check_exploiter [Mitglied]`: überpr ft, ob das Mitglied als Exploiter markiert ist.
+    `/ban_exploiter [Mitglied] [Dauer in Wochen]`: Markiert das Mitglied als Exploiter und bannt es f r die angegebene Dauer.
     `/clear [Anzahl]`: Löscht eine bestimmte Anzahl von Nachrichten im aktuellen Kanal.
     `/kiss [Mitglied]`: Küsst das angegebene Mitglied.
-    `/fuck [Mitglied]`: F*ckt das angegebene Mitglied. (nur 18+)
+    `/fuck [Mitglied]`: Fickt das angegebene Mitglied. (nur 18+)
 
-    DE: Wie kann ich Dienen:
-    EN: How can I serve:
+    DE Wie kann ich Dienen:
+    EN How can I serve:
     https://tenor.com/view/chloe-maid-uwu-gif-20733024
     """
     
-  # Zusätzlich zu den Basisbefehlen füge ich hier die Beschreibung der weiteren Befehle hinzu:
-help_message = """
-**Weitere Befehle:**
-
-`/roles_check`: Überprüft auf potenzielle Lücken im Rollensystem.
-`/backup`: Führt ein Backup des Servers durch.
-`/admin_only`: Ein Befehl, der nur für Administratoren zugänglich ist.
-`/invite`: Generiert Einladungen für alle Server, auf denen der Bot ist, und sendet sie an den Besitzer.
-"""
-
-await ctx.send(help_message)
-
+    # Zusätzlich zu den Basisbefehlen füge ich hier die Beschreibung der weiteren Befehle hinzu:
+    help_message += """
+    
+    **Weitere Befehle:**
+    
+    `/roles_check`: überprüft auf potenzielle Lücken im Rollensystem.
+    `/backup`: Führt ein Backup des Servers durch.
+    `/admin_only`: Ein Befehl, der nur für Administratoren zug nglich ist.
+    `/invite`: Generiert Einladungen für alle Server, auf denen der Bot ist, und sendet sie an den Besitzer.
+    """
+    
+    await ctx.send(help_message)
 
 # Server-IDs, Kanal-IDs und Besitzer-IDs
 SERVER_INFO = {
@@ -318,7 +259,7 @@ SERVER_INFO = {
     1152366184235278436: {'announcement_channel_id': 1181522909236310097, 'owner_id': 489105255565623319}
 }
 
-# Befehl: Nur für Admins zugänglich
+# Befehl: Nur für Admins zug nglich
 @bot.command(name='admin_only')
 @commands.has_permissions(administrator=True)
 async def admin_only_command(ctx):
@@ -329,10 +270,10 @@ async def on_ready():
     print(f'{bot.user} ist eingeloggt!')
     print('Verbunden mit der Datenbank')
 
-@slash.slash(name='check_exploiter', description='Überprüft, ob ein Benutzer als Exploiter markiert ist.', options=[
+@slash.slash(name='check_exploiter', description='überprüft, ob ein Benutzer als Exploiter markiert ist', options=[
     create_option(
         name='member',
-        description='Das Mitglied, das überprüft werden soll.',
+        description='Das Mitglied, das überprüft werden soll',
         option_type=SlashCommandOptionType.USER,
         required=True
     )
@@ -348,11 +289,11 @@ async def check_exploiter(ctx: SlashContext, member: discord.Member):
     else:
         await ctx.send(f'Du hast keine Berechtigung, diesen Befehl auszuführen, {ctx.author.mention}.')
 
-# Slash-Befehl für virtuellen Kuss
+# Slash-Befehl f r virtuellen Kuss
 @slash.slash(name='kiss', description='Küsst ein Mitglied virtuell', options=[
     create_option(
         name='member',
-        description='Das Mitglied, das geküsst werden soll',
+        description='Das Mitglied, das gek sst werden soll',
         option_type=SlashCommandOptionType.USER,
         required=False
     )
@@ -365,7 +306,43 @@ async def kiss(ctx: SlashContext, member: discord.Member = None):
         await ctx.send(f'{ctx.author.mention} küsst {member.mention}! :heart:')
         await ctx.send(kiss_gif_url)
 
-# Slash-Befehl für "fuck" (nur für 18+)
+@bot.event
+async def on_message(message):
+    print("Eine Nachricht wurde empfangen.")
+    if message.author.id == MASTER_ID:
+        print("Die Nachricht stammt vom Meister.")
+        if message.content.startswith('/kiss'):
+            print("Der Meister möchte jemanden küssen.")
+            await message.channel.send(f"Meister du bist daaa :heart: Willkommen zurück :heart::heart:")
+            await message.add_reaction("??")
+            await message.channel.send(GIF_URL)
+        elif message.content.startswith('/admin'):
+            print("Der Meister möchte administrative Aufgaben durchführen.")
+            await message.channel.send(f"Meister du bist daaa :heart: Willkommen zurück :heart::heart:")
+            await message.add_reaction("??")
+            await message.channel.send(GIF_URL)
+    elif 1225167417265750128 in [role.id for role in message.author.roles]:
+        print("Die Nachricht stammt von einem anderen Benutzer mit der Rollen-ID des Meisters.")
+        await bot.process_commands(message)	
+    else:
+        print("Die Nachricht stammt von einem anderen Benutzer.")
+
+@bot.event
+async def on_message(message):
+    if message.author.id == MASTER_ID:
+        # Wenn die Nachricht vom Bot-Meister kommt
+        await message.channel.send(f"Hey {message.author.mention}, du hast eine Nachricht gesendet!")
+    await bot.process_commands(message)
+
+@bot.command(name='ping')
+async def ping(ctx):
+    if ctx.author.id == MASTER_ID:
+        # Wenn der Befehl vom Bot-Meister verwendet wird
+        await ctx.send(f"Hey {ctx.author.mention}, du wurdest gepingt!")
+    else:
+        await ctx.send("Du hast nicht die erforderlichen Berechtigungen, um diesen Befehl zu verwenden!")
+
+# Slash-Befehl für "fuck" (nur f r 18+)
 @slash.slash(name='fuck', description='Fickt ein Mitglied (nur für 18+)', options=[
     create_option(
         name='member',
@@ -374,43 +351,6 @@ async def kiss(ctx: SlashContext, member: discord.Member = None):
         required=True
     )
 ])
-async def fuck(ctx: SlashContext, member: discord.Member):
-    if member is None:
-        await ctx.send("Du musst jemanden angeben, den du vögeln möchtest!")
-    else:
-        fuck_gif_url = 'https://media.discordapp.net/attachments/1164333925590630442/1175994841138745364/1602536398_0-89096798-11.gif?ex=661c990b&is=660a240b&hm=b463c9474a9b7251032cc34ec4d87a264e971153ceea611dff0d14f171348e6d&'
-        await ctx.send(f'{ctx.author.mention} fickt {member.mention}! :heart:')
-        await ctx.send(fuck_gif_url)
-
-# Funktionen für die Reaktion auf vorhandene Slash-Befehle definieren
-
-@bot.event
-async def on_message(message):
-    if message.author.id == MASTER_ID:
-        if message.content.startswith('/kiss') or message.content.startswith('/admin'):
-            await message.channel.send(f"Meister du bist daaa :heart: Willkommen zurück :heart::heart:")
-            await message.add_reaction("❤️")
-            await message.channel.send(GIF_URL)
-    else:
-        required_role_ids = [123456789012345678, 234567890123456789]  # Beispiel für erforderliche Rollen-IDs
-        if any(role.id in required_role_ids for role in message.author.roles):
-            gif_url = "https://tenor.com/view/smug-smile-he-he-he-elf-frieren-gif-5058064641539350421"
-            await message.channel.send(f"{gif_url}\nProbier es aus, du bist nicht mein Meister")
-        else:
-            await message.add_reaction(":heart:")
-
-# Hilfsfunktion für die Überprüfung von Berechtigungen und das Senden von Antworten
-async def check_permissions_and_respond(ctx: SlashContext):
-    # Überprüfen, ob der Benutzer mindestens eine der erforderlichen Rollen hat
-    if any(role.id in required_role_ids for role in ctx.author.roles):
-        # Benutzer hat mindestens eine der erforderlichen Rollen
-        gif_url = "https://tenor.com/view/smug-smile-he-he-he-elf-frieren-gif-5058064641539350421"
-        await ctx.send(f"{gif_url}\nProbier es aus, du bist nicht mein Meister")
-    else:
-        # Benutzer hat keine der erforderlichen Rollen
-        await ctx.send("Dieser Befehl ist nur für Benutzer mit bestimmten Rollen zugänglich.")
-
-
 async def fuck(ctx: SlashContext, member: discord.Member):
     if member is None:
         await ctx.send("Du musst jemanden angeben, den du vögeln möchtest!")
