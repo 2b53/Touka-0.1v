@@ -359,4 +359,4 @@ async def fuck(ctx: SlashContext, member: discord.Member):
         await ctx.send(f'{ctx.author.mention} fickt {member.mention}! :heart:')
         await ctx.send(fuck_gif_url)
 
-bot.run('MTE5Mjg2NDY5NjI5OTE1OTU1Mg.Giux93.LIvkACOq4jPLy9rWDN5s0z7rm4q8qMNvUl7q6U')
+bot.run('**')
